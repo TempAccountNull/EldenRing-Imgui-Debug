@@ -147,6 +147,7 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain3* pSwapChain, UINT SyncInterval, UINT 
 				MessageBox(NULL, "The game is not running. Please ensure you're running the game!", "GAME HOOK ERROR", MB_ICONERROR);
 
 			ImGui::CreateContext();
+			
 
 			ImGuiIO& io = ImGui::GetIO();
 			//ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantTextInput || ImGui::GetIO().WantCaptureKeyboard;
@@ -207,9 +208,9 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain3* pSwapChain, UINT SyncInterval, UINT 
 
 			ImGui_ImplWin32_Init(window);
 			ImGui_ImplDX12_Init(DirectX12Interface::Device, DirectX12Interface::BuffersCounts, DXGI_FORMAT_R8G8B8A8_UNORM, DirectX12Interface::DescriptorHeapImGuiRender, DirectX12Interface::DescriptorHeapImGuiRender->GetCPUDescriptorHandleForHeapStart(), DirectX12Interface::DescriptorHeapImGuiRender->GetGPUDescriptorHandleForHeapStart());
-			ImGui_ImplDX12_CreateDeviceObjects();
-			ImGui::GetIO().ImeWindowHandle = window;
-			Process::WndProc = (WNDPROC)SetWindowLongPtr(window, GWLP_WNDPROC, (__int3264)(LONG_PTR)WndProc);
+			//ImGui_ImplDX12_CreateDeviceObjects();
+			//ImGui::GetIO().ImeWindowHandle = window;
+			//Process::WndProc = (WNDPROC)SetWindowLongPtr(window, GWLP_WNDPROC, (__int3264)(LONG_PTR)WndProc);
 		}
 		ImGui_Initialised = true;
 	}
