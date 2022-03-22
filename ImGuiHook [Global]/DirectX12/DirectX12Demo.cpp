@@ -227,23 +227,27 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain3* pSwapChain, UINT SyncInterval, UINT 
 	//ImGuiIO& io = ImGui::GetIO();
 	//ImGui::GetIO().MouseDrawCursor = ShowMenu;
 
-	DrawMenu();
+	//DrawMenu();
 	
 	//Draw shit
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, { 0.0f, 0.0f, 0.0f, 0.0f });
-	ImGui::Begin(("##test"), nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs);
+	//ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
+	//ImGui::PushStyleColor(ImGuiCol_WindowBg, { 0.0f, 0.0f, 0.0f, 0.0f });
+	//if (ImGui::Begin(("##test"), nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs)) {
 
-	ImGui::SetWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-	ImGui::SetWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y), ImGuiCond_Always);
+	//	ImGui::SetWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+	//	ImGui::SetWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y), ImGuiCond_Always);
 
-	//Drawlist crashes
-	//ImDrawList* DrawList = ImGui::GetWindowDrawList();
-	//DrawMisc(DrawList);
+	//	//Drawlist crashes
+	//	//ImDrawList* DrawList = ImGui::GetWindowDrawList();
+	//	//DrawMisc(DrawList);
+	//	ImGui::End();
+	//}
+	//ImGui::PopStyleColor();
+	//ImGui::PopStyleVar(2);
 
 	//End Frame
-	ImGui::EndFrame();
+	//ImGui::EndFrame();
 
 	DirectX12Interface::_FrameContext& CurrentFrameContext = DirectX12Interface::FrameContext[pSwapChain->GetCurrentBackBufferIndex()];
 	CurrentFrameContext.CommandAllocator->Reset();
@@ -260,9 +264,6 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain3* pSwapChain, UINT SyncInterval, UINT 
 	DirectX12Interface::CommandList->ResourceBarrier(1, &Barrier);
 	DirectX12Interface::CommandList->OMSetRenderTargets(1, &CurrentFrameContext.DescriptorHandle, FALSE, nullptr);
 	DirectX12Interface::CommandList->SetDescriptorHeaps(1, &DirectX12Interface::DescriptorHeapImGuiRender);
-
-	ImGui::PopStyleColor();
-	ImGui::PopStyleVar(2);
 
 	ImGui::Render();
 	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), DirectX12Interface::CommandList);
