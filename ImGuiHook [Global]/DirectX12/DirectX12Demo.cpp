@@ -135,144 +135,149 @@ void DrawMenu()
 
 HRESULT APIENTRY MJPresent(IDXGISwapChain3* pSwapChain, UINT SyncInterval, UINT Flags)
 {
-	if (!ImGui_Initialised) 
-	{
-		if (SUCCEEDED(pSwapChain->GetDevice(__uuidof(ID3D12Device), (void**)&DirectX12Interface::Device)))
-		{
-			std::cout << "[!] - Attempting to find Elden ring window . . .\n";
-			window = FindWindow(0, "ELDEN RING™");
 
-			//Sanity check
-			if (!window)
-				MessageBox(NULL, "The game is not running. Please ensure you're running the game!", "GAME HOOK ERROR", MB_ICONERROR);
-
-			ImGui::CreateContext();
-			
-
-			ImGuiIO& io = ImGui::GetIO();
-			//ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantTextInput || ImGui::GetIO().WantCaptureKeyboard;
-			//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-			io.ConfigFlags = ImGuiConfigFlags_NoMouseCursorChange;
-
-			DXGI_SWAP_CHAIN_DESC Desc;
-			pSwapChain->GetDesc(&Desc);
-			Desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-			Desc.OutputWindow = Process::Hwnd;
-			Desc.Windowed = ((GetWindowLongPtr(Process::Hwnd, GWL_STYLE) & WS_POPUP) != 0) ? false : true;
-
-			DirectX12Interface::BuffersCounts = Desc.BufferCount;
-			DirectX12Interface::FrameContext = new DirectX12Interface::_FrameContext[DirectX12Interface::BuffersCounts];
-
-			D3D12_DESCRIPTOR_HEAP_DESC DescriptorImGuiRender = {};
-			DescriptorImGuiRender.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-			DescriptorImGuiRender.NumDescriptors = DirectX12Interface::BuffersCounts;
-			DescriptorImGuiRender.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-
-			if (DirectX12Interface::Device->CreateDescriptorHeap(&DescriptorImGuiRender, IID_PPV_ARGS(&DirectX12Interface::DescriptorHeapImGuiRender)) != S_OK)
-				return oPresent(pSwapChain, SyncInterval, Flags);
-
-			ID3D12CommandAllocator* Allocator;
-			if (DirectX12Interface::Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&Allocator)) != S_OK)
-				return oPresent(pSwapChain, SyncInterval, Flags);
-
-			for (size_t i = 0; i < DirectX12Interface::BuffersCounts; i++) {
-				DirectX12Interface::FrameContext[i].CommandAllocator = Allocator;
-			}
-
-			if (DirectX12Interface::Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, Allocator, NULL, IID_PPV_ARGS(&DirectX12Interface::CommandList)) != S_OK ||
-				DirectX12Interface::CommandList->Close() != S_OK)
-				return oPresent(pSwapChain, SyncInterval, Flags);
-
-			D3D12_DESCRIPTOR_HEAP_DESC DescriptorBackBuffers;
-			DescriptorBackBuffers.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-			DescriptorBackBuffers.NumDescriptors = DirectX12Interface::BuffersCounts;
-			DescriptorBackBuffers.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-			DescriptorBackBuffers.NodeMask = 1;
-
-			if (DirectX12Interface::Device->CreateDescriptorHeap(&DescriptorBackBuffers, IID_PPV_ARGS(&DirectX12Interface::DescriptorHeapBackBuffers)) != S_OK)
-				return oPresent(pSwapChain, SyncInterval, Flags);
-
-			const auto RTVDescriptorSize = DirectX12Interface::Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-			D3D12_CPU_DESCRIPTOR_HANDLE RTVHandle = DirectX12Interface::DescriptorHeapBackBuffers->GetCPUDescriptorHandleForHeapStart();
-
-			for (size_t i = 0; i < DirectX12Interface::BuffersCounts; i++) {
-				ID3D12Resource* pBackBuffer = nullptr;
-				DirectX12Interface::FrameContext[i].DescriptorHandle = RTVHandle;
-				pSwapChain->GetBuffer(i, IID_PPV_ARGS(&pBackBuffer));
-				DirectX12Interface::Device->CreateRenderTargetView(pBackBuffer, nullptr, RTVHandle);
-				DirectX12Interface::FrameContext[i].Resource = pBackBuffer;
-				RTVHandle.ptr += RTVDescriptorSize;
-			}
-
-			std::cout << "[!] - Initialized ImGui!\n";
-
-			ImGui_ImplWin32_Init(window);
-			ImGui_ImplDX12_Init(DirectX12Interface::Device, DirectX12Interface::BuffersCounts, DXGI_FORMAT_R8G8B8A8_UNORM, DirectX12Interface::DescriptorHeapImGuiRender, DirectX12Interface::DescriptorHeapImGuiRender->GetCPUDescriptorHandleForHeapStart(), DirectX12Interface::DescriptorHeapImGuiRender->GetGPUDescriptorHandleForHeapStart());
-			//ImGui_ImplDX12_CreateDeviceObjects();
-			//ImGui::GetIO().ImeWindowHandle = window;
-			//Process::WndProc = (WNDPROC)SetWindowLongPtr(window, GWLP_WNDPROC, (__int3264)(LONG_PTR)WndProc);
-		}
-		ImGui_Initialised = true;
-	}
-
-	if (DirectX12Interface::CommandQueue == nullptr)
-		return oPresent(pSwapChain, SyncInterval, Flags);
-
-	ImGui_ImplDX12_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-
-	if (GetAsyncKeyState(VK_INSERT) & 1)
-		ShowMenu = !ShowMenu;
-
-	//ImGuiIO& io = ImGui::GetIO();
-	//ImGui::GetIO().MouseDrawCursor = ShowMenu;
-
-	//DrawMenu();
+	//char buf[100] = { 0 };
+	//sprintf(buf, "%p", oPresent);
+	//MessageBoxA(0, buf, 0, 0);
 	
-	//Draw shit
-	//ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
-	//ImGui::PushStyleColor(ImGuiCol_WindowBg, { 0.0f, 0.0f, 0.0f, 0.0f });
-	//if (ImGui::Begin(("##test"), nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs)) {
+	//if (!ImGui_Initialised) 
+	//{
+	//	if (SUCCEEDED(pSwapChain->GetDevice(__uuidof(ID3D12Device), (void**)&DirectX12Interface::Device)))
+	//	{
+	//		std::cout << "[!] - Attempting to find Elden ring window . . .\n";
+	//		window = FindWindow(0, "ELDEN RING™");
 
-	//	ImGui::SetWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-	//	ImGui::SetWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y), ImGuiCond_Always);
+	//		//Sanity check
+	//		if (!window)
+	//			MessageBox(NULL, "The game is not running. Please ensure you're running the game!", "GAME HOOK ERROR", MB_ICONERROR);
 
-	//	//Drawlist crashes
-	//	//ImDrawList* DrawList = ImGui::GetWindowDrawList();
-	//	//DrawMisc(DrawList);
-	//	ImGui::End();
+	//		ImGui::CreateContext();
+	//		
+
+	//		ImGuiIO& io = ImGui::GetIO();
+	//		//ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantTextInput || ImGui::GetIO().WantCaptureKeyboard;
+	//		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	//		io.ConfigFlags = ImGuiConfigFlags_NoMouseCursorChange;
+
+	//		DXGI_SWAP_CHAIN_DESC Desc;
+	//		pSwapChain->GetDesc(&Desc);
+	//		Desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	//		Desc.OutputWindow = Process::Hwnd;
+	//		Desc.Windowed = ((GetWindowLongPtr(Process::Hwnd, GWL_STYLE) & WS_POPUP) != 0) ? false : true;
+
+	//		DirectX12Interface::BuffersCounts = Desc.BufferCount;
+	//		DirectX12Interface::FrameContext = new DirectX12Interface::_FrameContext[DirectX12Interface::BuffersCounts];
+
+	//		D3D12_DESCRIPTOR_HEAP_DESC DescriptorImGuiRender = {};
+	//		DescriptorImGuiRender.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	//		DescriptorImGuiRender.NumDescriptors = DirectX12Interface::BuffersCounts;
+	//		DescriptorImGuiRender.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+	//		if (DirectX12Interface::Device->CreateDescriptorHeap(&DescriptorImGuiRender, IID_PPV_ARGS(&DirectX12Interface::DescriptorHeapImGuiRender)) != S_OK)
+	//			return oPresent(pSwapChain, SyncInterval, Flags);
+
+	//		ID3D12CommandAllocator* Allocator;
+	//		if (DirectX12Interface::Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&Allocator)) != S_OK)
+	//			return oPresent(pSwapChain, SyncInterval, Flags);
+
+	//		for (size_t i = 0; i < DirectX12Interface::BuffersCounts; i++) {
+	//			DirectX12Interface::FrameContext[i].CommandAllocator = Allocator;
+	//		}
+
+	//		if (DirectX12Interface::Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, Allocator, NULL, IID_PPV_ARGS(&DirectX12Interface::CommandList)) != S_OK ||
+	//			DirectX12Interface::CommandList->Close() != S_OK)
+	//			return oPresent(pSwapChain, SyncInterval, Flags);
+
+	//		D3D12_DESCRIPTOR_HEAP_DESC DescriptorBackBuffers;
+	//		DescriptorBackBuffers.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	//		DescriptorBackBuffers.NumDescriptors = DirectX12Interface::BuffersCounts;
+	//		DescriptorBackBuffers.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	//		DescriptorBackBuffers.NodeMask = 1;
+
+	//		if (DirectX12Interface::Device->CreateDescriptorHeap(&DescriptorBackBuffers, IID_PPV_ARGS(&DirectX12Interface::DescriptorHeapBackBuffers)) != S_OK)
+	//			return oPresent(pSwapChain, SyncInterval, Flags);
+
+	//		const auto RTVDescriptorSize = DirectX12Interface::Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	//		D3D12_CPU_DESCRIPTOR_HANDLE RTVHandle = DirectX12Interface::DescriptorHeapBackBuffers->GetCPUDescriptorHandleForHeapStart();
+
+	//		for (size_t i = 0; i < DirectX12Interface::BuffersCounts; i++) {
+	//			ID3D12Resource* pBackBuffer = nullptr;
+	//			DirectX12Interface::FrameContext[i].DescriptorHandle = RTVHandle;
+	//			pSwapChain->GetBuffer(i, IID_PPV_ARGS(&pBackBuffer));
+	//			DirectX12Interface::Device->CreateRenderTargetView(pBackBuffer, nullptr, RTVHandle);
+	//			DirectX12Interface::FrameContext[i].Resource = pBackBuffer;
+	//			RTVHandle.ptr += RTVDescriptorSize;
+	//		}
+
+	//		std::cout << "[!] - Initialized ImGui!\n";
+
+	//		ImGui_ImplWin32_Init(window);
+	//		ImGui_ImplDX12_Init(DirectX12Interface::Device, DirectX12Interface::BuffersCounts, DXGI_FORMAT_R8G8B8A8_UNORM, DirectX12Interface::DescriptorHeapImGuiRender, DirectX12Interface::DescriptorHeapImGuiRender->GetCPUDescriptorHandleForHeapStart(), DirectX12Interface::DescriptorHeapImGuiRender->GetGPUDescriptorHandleForHeapStart());
+	//		//ImGui_ImplDX12_CreateDeviceObjects();
+	//		//ImGui::GetIO().ImeWindowHandle = window;
+	//		//Process::WndProc = (WNDPROC)SetWindowLongPtr(window, GWLP_WNDPROC, (__int3264)(LONG_PTR)WndProc);
+	//	}
+	//	ImGui_Initialised = true;
 	//}
-	//ImGui::PopStyleColor();
-	//ImGui::PopStyleVar(2);
 
-	//End Frame
-	//ImGui::EndFrame();
+	//if (DirectX12Interface::CommandQueue == nullptr)
+	//	return oPresent(pSwapChain, SyncInterval, Flags);
 
-	DirectX12Interface::_FrameContext& CurrentFrameContext = DirectX12Interface::FrameContext[pSwapChain->GetCurrentBackBufferIndex()];
-	CurrentFrameContext.CommandAllocator->Reset();
+	//ImGui_ImplDX12_NewFrame();
+	//ImGui_ImplWin32_NewFrame();
+	//ImGui::NewFrame();
 
-	D3D12_RESOURCE_BARRIER Barrier;
-	Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	Barrier.Transition.pResource = CurrentFrameContext.Resource;
-	Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-	Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	//if (GetAsyncKeyState(VK_INSERT) & 1)
+	//	ShowMenu = !ShowMenu;
 
-	DirectX12Interface::CommandList->Reset(CurrentFrameContext.CommandAllocator, nullptr);
-	DirectX12Interface::CommandList->ResourceBarrier(1, &Barrier);
-	DirectX12Interface::CommandList->OMSetRenderTargets(1, &CurrentFrameContext.DescriptorHandle, FALSE, nullptr);
-	DirectX12Interface::CommandList->SetDescriptorHeaps(1, &DirectX12Interface::DescriptorHeapImGuiRender);
+	////ImGuiIO& io = ImGui::GetIO();
+	////ImGui::GetIO().MouseDrawCursor = ShowMenu;
 
-	ImGui::Render();
-	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), DirectX12Interface::CommandList);
-	Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-	DirectX12Interface::CommandList->ResourceBarrier(1, &Barrier);
-	DirectX12Interface::CommandList->Close();
-	DirectX12Interface::CommandQueue->ExecuteCommandLists(1, reinterpret_cast<ID3D12CommandList* const*>(&DirectX12Interface::CommandList));
+	////DrawMenu();
+	//
+	////Draw shit
+	////ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	////ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
+	////ImGui::PushStyleColor(ImGuiCol_WindowBg, { 0.0f, 0.0f, 0.0f, 0.0f });
+	////if (ImGui::Begin(("##test"), nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs)) {
+
+	////	ImGui::SetWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+	////	ImGui::SetWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y), ImGuiCond_Always);
+
+	////	//Drawlist crashes
+	////	//ImDrawList* DrawList = ImGui::GetWindowDrawList();
+	////	//DrawMisc(DrawList);
+	////	ImGui::End();
+	////}
+	////ImGui::PopStyleColor();
+	////ImGui::PopStyleVar(2);
+
+	////End Frame
+	////ImGui::EndFrame();
+
+	//DirectX12Interface::_FrameContext& CurrentFrameContext = DirectX12Interface::FrameContext[pSwapChain->GetCurrentBackBufferIndex()];
+	//CurrentFrameContext.CommandAllocator->Reset();
+
+	//D3D12_RESOURCE_BARRIER Barrier;
+	//Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	//Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	//Barrier.Transition.pResource = CurrentFrameContext.Resource;
+	//Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	//Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+	//Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+	//DirectX12Interface::CommandList->Reset(CurrentFrameContext.CommandAllocator, nullptr);
+	//DirectX12Interface::CommandList->ResourceBarrier(1, &Barrier);
+	//DirectX12Interface::CommandList->OMSetRenderTargets(1, &CurrentFrameContext.DescriptorHandle, FALSE, nullptr);
+	//DirectX12Interface::CommandList->SetDescriptorHeaps(1, &DirectX12Interface::DescriptorHeapImGuiRender);
+
+	//ImGui::Render();
+	//ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), DirectX12Interface::CommandList);
+	//Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	//Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+	//DirectX12Interface::CommandList->ResourceBarrier(1, &Barrier);
+	//DirectX12Interface::CommandList->Close();
+	//DirectX12Interface::CommandQueue->ExecuteCommandLists(1, reinterpret_cast<ID3D12CommandList* const*>(&DirectX12Interface::CommandList));
 	return oPresent(pSwapChain, SyncInterval, Flags);
 }
 
@@ -352,13 +357,23 @@ DWORD WINAPI MainThread(LPVOID lpParameter)
 		std::cout << "[*] Game base address: " << (void*)EldenRingBase << "\n";
 		if (DirectX12::Init() == true)
 		{
-			std::cout << "[!] - pDevice found. Hooking now. . .\n";
-			CreateHook(54, (void**)&oExecuteCommandLists, MJExecuteCommandLists);
-			CreateHook(140, (void**)&oPresent, MJPresent);
-			CreateHook(84, (void**)&oDrawInstanced, MJDrawInstanced);
-			CreateHook(85, (void**)&oDrawIndexedInstanced, MJDrawIndexedInstanced);
-			std::cout << "[!] - pDevice was hooked successfully.\n";
-			InitHook = true;
+			void* Present = (void*)MethodsTable[140];
+			DWORD Dummy;
+			unsigned char Original[] = { 0x48, 0x89, 0x5C, 0x24, 0x10 };
+
+			
+			if (VirtualProtect(Present, 1, 0x40, &Dummy))
+			{
+				//Copy the original bytes to the hook.
+				memcpy(Present, Original, sizeof(Original));
+				std::cout << "[!] - pDevice found. Hooking now. . .\n";
+			//		CreateHook(54, (void**)&oExecuteCommandLists, MJExecuteCommandLists);
+					CreateHook(140, (void**)&oPresent, MJPresent);
+					//CreateHook(84, (void**)&oDrawInstanced, MJDrawInstanced);
+			//	CreateHook(85, (void**)&oDrawIndexedInstanced, MJDrawIndexedInstanced);
+					std::cout << "[!] - pDevice was hooked successfully.\n";
+					InitHook = true;
+			}
 		}
 	}
 	fclose(f);
